@@ -1,0 +1,65 @@
+<%- include('partials/head', { title: 'Chat empleados' }) %>
+  <%- include('partials/navbar') %>
+
+    <div class="container py-4">
+      <h3 class="mb-3">Chat de empleados</h3>
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between">
+          <span>Conectados: <span id="numClientes">0</span></span>
+          <span class="text-muted">
+            <%= user.name %>
+          </span>
+        </div>
+        <div class="card-body" id="zonaMensajes" style="height:400px; overflow-y:auto;">
+        </div>
+        <div class="card-footer">
+          <div class="input-group">
+            <input id="campoMensaje" class="form-control" placeholder="Escribe un mensaje...">
+            <button id="botonEnviar" class="btn btn-primary">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const usuarioActual = "<%= user.name %>";
+      const socket = io();
+      const campoMensaje = document.getElementById('campoMensaje');
+      const botonEnviar = document.getElementById('botonEnviar');
+      const zonaMensajes = document.getElementById('zonaMensajes');
+      const numClientes = document.getElementById('numClientes');
+      //Con click boton, envía mensaje
+      botonEnviar.addEventListener('click', enviarMensaje);
+      //Tb envía si pulsa enter
+      campoMensaje.addEventListener('keypress', e => {
+        if (e.key === 'Enter') enviarMensaje();
+      });
+      //Enviar el mensaje al servidor y limpiar el campo
+      function enviarMensaje() {
+        if (!campoMensaje.value.trim()) return;
+        socket.emit('mensaje_chat', campoMensaje.value);
+        campoMensaje.value = '';
+      }
+      //Mostrar cada mensaje recibido en el chat (derecha los propios, izquierda los ajenos)
+      socket.on('mensaje_chat', data => {
+        const esMiMensaje = data.usuario === usuarioActual;
+        const bloqueMensaje = document.createElement('div');
+        bloqueMensaje.className = esMiMensaje ? 'd-flex justify-content-end mb-2' : 'd-flex justify-content-start mb-2';
+        bloqueMensaje.innerHTML = 
+        `<div class="p-2 rounded ${esMiMensaje ? 'bg-primary text-white' : 'bg-light'}" style="max-width:70%;">
+        <div style="font-size:12px;">
+          <strong>${data.usuario}</strong>
+          <span class="text-white ms-2">${data.hora}</span>
+        </div>
+        <div>${data.mensaje}</div>
+      </div>`;
+        zonaMensajes.appendChild(bloqueMensaje);
+        zonaMensajes.scrollTop = zonaMensajes.scrollHeight;
+      });
+      // Actualizar el número de usuarios conectados
+      socket.on('num_clientes', num => {
+        numClientes.innerText = num;
+      });
+    </script>
+
+    <%- include('partials/foot') %>

@@ -1,0 +1,190 @@
+<%- include('partials/head', { title: 'Consulta' }) %>
+<%- include('partials/navbar') %>
+
+<%
+  const filas = (todasLasMuestras || resultados || []);
+  function pad(n){ return String(n).padStart(2,'0'); } //Para poner cero delante y hacer dos cifras
+  function fmt(dt) { // Para mostrar la fecha y hora en formato más legible
+    if (!dt) return '';
+    const fecha = new Date(dt);
+    return `${pad(fecha.getDate())}/${pad(fecha.getMonth()+1)}/${fecha.getFullYear()} ${pad(fecha.getHours())}:${pad(fecha.getMinutes())}`;
+  }
+%>
+<div class="container py-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+      <h2 class="mb-1">Consulta</h2>
+      <div class="text-muted small">Total de resultados: <b id="totalResultados"><%= filas.length %></b></div>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-success" href="/nueva">Nueva</a>
+    </div>
+  </div>
+  <% if (success === 'created') { %>
+    <div class="alert alert-success">Muestra creada</div>
+  <% } else if (success === 'updated') { %>
+    <div class="alert alert-success">Muestra actualizada</div>
+  <% } else if (success === 'deleted') { %>
+    <div class="alert alert-success">Muestra eliminada</div>
+  <% } %>
+  <div class="row g-2 mb-3">
+    <div class="col-12 col-lg-4">
+      <form class="d-grid" method="GET" action="/consult">
+        <button class="btn btn-primary" type="submit" name="mostrar_todas" value="1">Mostrar todas</button>
+      </form>
+    </div>
+    <div class="col-12 col-lg-8">
+      <form class="input-group" method="GET" action="/consult">
+        <span class="input-group-text">🔎</span>
+        <input class="form-control" name="codigo" placeholder="Buscar por código (servidor)">
+        <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+      </form>
+      <div class="form-text">Búsqueda por código exacto.</div>
+    </div>
+  </div>
+  <!-- Filtro rápido en pantalla -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <label class="form-label mb-1" for="busquedaRapida">Filtro rápido</label>
+      <input id="busquedaRapida" class="form-control" placeholder="Escribe: proyecto, código...">
+      <div class="form-text">Filtra sobre los resultados ya cargados en pantalla</div>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Proyecto</th>
+          <th>Código</th>
+          <th>Fecha/Hora</th>
+          <th>Tª</th>
+          <th>pH</th>
+          <th>O<sub>2</sub></th>
+          <th>Cond</th>
+          <th>Foto</th>
+          <th>Obs</th>
+          <th style="width:170px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="filasTabla">
+        <% filas.forEach(f => { %>
+          <tr class="filaMuestra">
+            <td><%= f.id %></td>
+            <td><%= f.proyecto %></td>
+            <td><span class="badge text-bg-secondary"><%= f.codigo %></span></td>
+            <td><%= fmt(f.fecha_hora) %></td>
+            <td><%= formateaDecimal(f.temperatura_agua) %></td>
+            <td><%= formateaDecimal(f.pH) %></td>
+            <td><%= formateaDecimal(f.oxigeno_agua) %></td>
+            <td><%= formateaDecimal(f.conductividad) %></td>
+            <td>
+              <% if (f.foto_path) { %>
+                <img
+                  src="<%= f.foto_path %>"
+                  alt="Foto de la muestra"
+                  class="img-thumbnail miniatura-foto"
+                  style="width:70px; height:50px; object-fit:cover; cursor:pointer;"
+                  data-src="<%= f.foto_path %>">
+              <% } else { %>
+                <span class="text-muted">—</span>
+              <% } %>
+            </td>
+            <td class="text-truncate" style="max-width:240px"><%= f.observaciones || '—' %></td>
+            <td>
+              <a class="btn btn-sm btn-warning" href="/editar/<%= f.id %>">Editar</a>
+              <form action="/consult?_method=DELETE" method="POST" class="d-inline">
+                <input type="hidden" name="id" value="<%= f.id %>">
+                <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('¿Seguro que quieres eliminar esta muestra?')">
+                Eliminar
+                </button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <!-- Paginación -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
+    <div class="btn-group">
+      <button id="botonAnterior" class="btn btn-outline-secondary" type="button">« Anterior</button>
+      <button id="botonSiguiente" class="btn btn-outline-secondary" type="button">Siguiente »</button>
+    </div>
+  </div>
+</div>
+<!-- Modal para ver la foto en grande -->
+<div class="modal fade" id="modalFoto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Foto de la muestra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="imagenModalFoto" src="" alt="Foto ampliada" class="img-fluid rounded">
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const busquedaRapida = document.getElementById('busquedaRapida');
+  const filasMuestra = document.querySelectorAll('.filaMuestra');
+  const botonAnterior = document.getElementById('botonAnterior');
+  const botonSiguiente = document.getElementById('botonSiguiente');
+  let paginaActual = 1;
+  const resultadosPorPagina = 10;
+  //Para mostrar las muestras según lo que escribe el usuario en búsqueda rápida y en la página correspondiente
+  function pintarTabla() {
+    const textoBuscado = busquedaRapida.value.toLowerCase();
+    const filasFiltradas = Array.from(filasMuestra).filter(fila =>
+      fila.innerText.toLowerCase().includes(textoBuscado)
+    );
+    const totalPaginas = Math.ceil(filasFiltradas.length / resultadosPorPagina) || 1;
+    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+    if (paginaActual < 1) paginaActual = 1;
+    filasMuestra.forEach(fila => {
+      fila.style.display = 'none';
+    });
+    const inicio = (paginaActual - 1) * resultadosPorPagina;
+    const fin = inicio + resultadosPorPagina;
+    filasFiltradas.slice(inicio, fin).forEach(fila => {
+      fila.style.display = '';
+    });
+    botonAnterior.disabled = paginaActual === 1;
+    botonSiguiente.disabled = paginaActual === totalPaginas;
+  }
+//Si escribe en el buscador vuelve a la página 1 y pinta
+  busquedaRapida.addEventListener('input', () => {
+    paginaActual = 1;
+    pintarTabla();
+  });
+//Si pulsa botón anterior, una página menos
+  botonAnterior.addEventListener('click', () => {
+    paginaActual--;
+    pintarTabla();
+  });
+//Si pulsa botón siguiente, una página más
+  botonSiguiente.addEventListener('click', () => {
+    paginaActual++;
+    pintarTabla();
+  });
+  pintarTabla();
+  // Modal para ampliar la foto
+  const elementoModalFoto = document.getElementById('modalFoto');
+  const imagenModalFoto = document.getElementById('imagenModalFoto');
+  const modalFoto = elementoModalFoto ? new bootstrap.Modal(elementoModalFoto) : null;
+  if (elementoModalFoto) {//Si se cierra vacía la imagen para que no quede cargada
+    elementoModalFoto.addEventListener('hidden.bs.modal', () => { imagenModalFoto.src = '';
+    });
+  }
+// Al pulsar una miniatura, abre la foto en grande 
+  document.addEventListener('click', (e) => {
+    const miniatura = e.target.closest('.miniatura-foto');
+    if (!miniatura || !modalFoto) return;
+    imagenModalFoto.src = miniatura.dataset.src;
+    modalFoto.show();
+  });
+</script>
+
+<%- include('partials/foot') %>

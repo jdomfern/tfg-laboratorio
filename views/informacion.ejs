@@ -1,0 +1,190 @@
+<%- include('partials/head', { title: title || 'Información adicional' }) %>
+<%- include('partials/navbar') %>
+
+<div class="container py-4">
+  <div class="mb-4">
+    <h2 class="mb-1">Información adicional</h2>
+    <p class="text-muted mb-0">
+      Panel de Business Intelligence
+    </p>
+  </div>
+  <% if (success) { %>
+    <div class="alert alert-success">
+      Datos actualizados: <strong><%= success %></strong>
+    </div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-danger">
+      <strong>Error:</strong> <%= error %>
+      <% if (error === 'aemet' || error === 'embalses' || error === 'masas superficiales' || error === 'masas subterráneas' || error === 'muestras') { %>
+        <br>Revisa la conexión con Google Apps Script
+      <% } %>
+    </div>
+  <% } %>
+  <% if (role === 'administrador') { %>
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Gráficos relacionados con los proyectos</h4>
+      </div>
+      <div class="card-body">
+        <form action="/informacion/muestras/exportar" method="POST" class="mb-3">
+          <button class="btn btn-primary" type="submit">
+            Actualizar datos
+          </button>
+        </form>
+        <div id="panel-muestras" class="<%= success ? '' : 'd-none' %>">
+          <div class="looker-recorte">
+            <iframe
+            src="<%= lookerInternoUrl %>"
+            allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-success text-white">
+        <h4 class="mb-0">Open Data CHG</h4>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">
+          Datos públicos proporcionados por Confederación Hidrográfica del Guadalquivir
+        </p>
+        <div class="row g-3 align-items-end mb-4">
+          <div class="col-md-8">
+            <select id="selectorChg" class="form-select">
+              <option value="" <%= panel === '' ? 'selected' : '' %>>Seleccione el panel CHG</option>
+              <option value="embalses" <%= panel === 'embalses' ? 'selected' : '' %>>Embalses</option>
+              <option value="rios" <%= panel === 'rios' ? 'selected' : '' %>>Masas de agua superficiales</option>
+              <option value="subterraneas" <%= panel === 'subterraneas' ? 'selected' : '' %>>Masas de agua subterráneas</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <form id="formActualizarChg" action="" method="POST" class="d-none">
+              <button id="btnActualizarChg" class="btn btn-success w-100" type="submit"></button>
+            </form>
+          </div>
+        </div>
+        <div id="panel-embalses" class="panel-chg d-none">
+          <h4>Embalses CHG</h4>
+          <div class="looker-recorte">
+            <iframe
+              src="<%= lookerEmbalsesUrl %>"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+        <div id="panel-rios" class="panel-chg d-none">
+          <h4>Masas de agua superficiales</h4>
+          <div class="looker-recorte">
+            <iframe
+              src="<%= lookerRiosUrl %>"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+        <div id="panel-subterraneas" class="panel-chg d-none">
+          <h4>Masas de agua subterráneas</h4>
+          <div class="looker-recorte">
+            <iframe
+              src="<%= lookerSubterraneasUrl %>"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+  <% if (role === 'tecnico') { %>
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-info text-white">
+        <h4 class="mb-0">Consulta meteorológica AEMET</h4>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">
+          Introduce un municipio para consultar predicción diaria y avisos meteorológicos.
+        </p>
+          <form action="/informacion/aemet" method="POST" class="row g-3 mb-4">
+          <div class="col-md-8">
+            <input
+              type="text"
+              name="municipio"
+              class="form-control"
+              placeholder="Ej: Sevilla, Córdoba, Dos Hermanas"
+              required>
+          </div>
+            <div class="col-md-4">
+            <button class="btn btn-info text-white w-100" type="submit">
+              Actualizar datos AEMET
+            </button>
+          </div>
+        </form>
+        <% if (panel === 'aemet' && success) { %>
+          <h5 class="mb-3">
+            Localidad: <strong><%= municipio %></strong>
+          </h5>
+          <div class="looker-recorte">
+          <iframe
+            src="<%= lookerAemetUrl %>?t=<%= cacheBuster %>" allowfullscreen>
+          </iframe>
+          </div>
+          <small class="text-muted">
+            Los datos pueden tardar unos segundos en actualizarse debido a la caché de Data Studio
+          </small>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  const selectorChg = document.getElementById('selectorChg'); //id del select para rol admin
+if (selectorChg) {
+  const formActualizarChg = document.getElementById('formActualizarChg');//id del form
+  const btnActualizarChg = document.getElementById('btnActualizarChg');//id del botón
+  const configuracionChg = {//configuración de cada option con el iframe a mostrar y su botón a actualizar
+    embalses: {
+      panel: 'panel-embalses',
+      action: '/informacion/chg/embalses',
+      textoBoton: 'Actualizar datos embalses'
+    },
+    rios: {
+      panel: 'panel-rios',
+      action: '/informacion/chg/rios',
+      textoBoton: 'Actualizar datos superficiales'
+    },
+    subterraneas: {
+      panel: 'panel-subterraneas',
+      action: '/informacion/chg/subterraneas',
+      textoBoton: 'Actualizar datos subterráneas'
+    }
+  };
+//carga la configuración del option seleccionado
+  selectorChg.addEventListener('change', function () {
+    document.querySelectorAll('.panel-chg').forEach(panel => {
+      panel.classList.add('d-none');//oculta los paneles
+    });
+    if (!this.value) {//para la opcion vacía se oculta botón y sin acción el formulario
+      formActualizarChg.classList.add('d-none');
+      formActualizarChg.action = '';
+      btnActualizarChg.textContent = '';
+      return;
+    }
+    const seleccion = configuracionChg[this.value]; //Configuración de la opción seleccionada
+    document.getElementById(seleccion.panel).classList.remove('d-none');//se muestra el panel seleccionado
+    formActualizarChg.classList.remove('d-none');// Muestra el formulario/botón de actualizar
+    formActualizarChg.action = seleccion.action;//cambia la ruta del botón
+    btnActualizarChg.textContent = seleccion.textoBoton;// y su text content
+  });
+  selectorChg.dispatchEvent(new Event('change'));//Aplica al cargar la configuración del option seleccionado
+}
+  // Ocultar mensajes automáticamente después de 4 segundos
+  setTimeout(() => {
+    const alertaSuccess = document.querySelector('.alert-success');
+    const alertaError = document.querySelector('.alert-danger');
+    if (alertaSuccess) alertaSuccess.remove();
+    if (alertaError) alertaError.remove();
+  }, 6000);
+</script>
+
+<%- include('partials/foot') %>

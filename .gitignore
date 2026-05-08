@@ -1,0 +1,8 @@
+node_modules
+.env
+.DS_Store
+test-results
+playwright-report
+test-mysql
+test-muestra
+test-db

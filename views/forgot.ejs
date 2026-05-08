@@ -1,0 +1,33 @@
+<%- include('partials/head', { title: 'Recuperar contraseña' }) %>
+<%- include('partials/navbar') %>
+
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          Recuperar contraseña
+        </div>
+        <div class="card-body">
+          <% if (error) { %>
+            <div class="alert alert-danger"><%= error %></div>
+          <% } %>
+          <% if (info) { %>
+            <div class="alert alert-success"><%- info %></div>
+          <% } %>
+          <form method="POST" action="/forgot">
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              Enviar
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/foot') %>

@@ -1,0 +1,204 @@
+<%- include('partials/head', { title: 'Nueva' }) %>
+  <%- include('partials/navbar') %>
+
+    <div class="container py-4">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+              <h4 class="mb-0">Nueva muestra</h4>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Introduzca los parámetros de la muestra</p>
+              <form method="POST" action="/nueva" class="row g-3" enctype="multipart/form-data">
+                <div class="col-md-6">
+                  <label class="form-label" for="proyectoId">Proyecto</label>
+                  <select name="proyectoId" id="proyectoId" class="form-select" required>
+                    <option value="">Selecciona un proyecto</option>
+                    <% proyectos.forEach(proyecto => { %>
+                      <option value="<%= proyecto.id %>">
+                        <%= proyecto.nombre %>
+                      </option>
+                    <% }) %>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="codigo">Código de la muestra</label>
+                  <input class="form-control" type="text" id="codigo" name="codigo" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="fecha_hora">Fecha y hora</label>
+                  <input class="form-control" type="datetime-local" id="fecha_hora" name="fecha_hora"
+                    max="<%= ahora %>">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="temperatura_agua">Temperatura del agua (ºC)</label>
+                  <input class="form-control" type="number" id="temperatura_agua" name="temperatura_agua" step="0.1"
+                    inputmode="decimal" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="pH">pH</label>
+                  <input class="form-control" type="number" id="pH" name="pH" min="1" step="0.01" max="14"
+                    inputmode="decimal" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="oxigeno_agua">Oxígeno disuelto (% sat)</label>
+                  <input class="form-control" type="number" id="oxigeno_agua" name="oxigeno_agua" step="0.01" min="0" max="200"
+                    inputmode="decimal" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="conductividad">Conductividad (µS/cm a 20ºC)</label>
+                  <input class="form-control" type="number" id="conductividad" name="conductividad" step="0.01"
+                    inputmode="decimal" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="observaciones">Observaciones</label>
+                  <textarea class="form-control" id="observaciones" name="observaciones" rows="3"
+                    style="text-align:left;"></textarea>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="foto">Foto del punto de muestreo</label>
+                  <input class="form-control" type="file" id="foto" name="foto" accept="image/*" capture="environment">
+                </div>
+                <div class="col-12 d-flex gap-2">
+                  <button class="btn btn-success" type="submit">Guardar</button>
+                  <a class="btn btn-outline-secondary" href="/consult">Volver</a>
+                </div>
+              </form>
+              <div id="zonaSincronizacion" class="mt-3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+
+      const formularioNuevaMuestra = document.querySelector("form");
+      const zonaSincronizacion = document.getElementById("zonaSincronizacion");
+      //Botón sincronizar
+      const botonSincronizar = document.createElement("button");
+      botonSincronizar.type = "button";
+      botonSincronizar.className = "btn btn-warning mt-3";
+      botonSincronizar.innerText = "Sincronizar";
+      botonSincronizar.classList.add("w-100");
+      botonSincronizar.style.marginTop = "20px";
+      zonaSincronizacion.appendChild(botonSincronizar);
+      //Indicador visual
+      const avisoPendientes = document.createElement("div");
+      avisoPendientes.className = "alert alert-info mt-3";
+      avisoPendientes.style.display = "none";
+      zonaSincronizacion.appendChild(avisoPendientes);
+      //Función guardar offline 
+      function guardarOffline(muestra) {
+        let cola = JSON.parse(localStorage.getItem("colaMuestras")) || [];
+        cola.push(muestra);
+        localStorage.setItem("colaMuestras", JSON.stringify(cola));
+        actualizarAviso();
+      }
+      //Función leer foto
+      function leerFotoBase64(file) {
+        return new Promise((resolve, reject) => {
+          const leer = new FileReader();
+          leer.onload = e => resolve(e.target.result);
+          leer.onerror = reject;
+          leer.readAsDataURL(file);
+        });
+      }
+      //Sincronización
+      async function sincronizar() {
+        let cola = JSON.parse(localStorage.getItem("colaMuestras")) || [];
+        if (cola.length === 0) {
+          alert("No hay muestras pendientes");
+          return;
+        }
+        for (let muestra of cola) {
+          try {
+            const resp = await fetch("/sync/muestras", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(muestra)
+            });
+            if (!resp.ok) {
+              throw new Error("Error al sincronizar");
+            }
+            const data = await resp.json();
+            if (!data.ok) {
+              throw new Error("Respuesta no válida del servidor");
+            }
+            if (data.aviso === "ya_sincronizada") {
+              alert("Esta muestra ya estaba sincronizada");
+            }
+            if (data.aviso === "duplicada_codigo_fecha") {
+              alert("Ya existe una muestra con ese código y fecha");
+            }
+          } catch (e) {
+            alert("Sigue sin conexión");
+            return;
+          }
+        }
+        localStorage.removeItem("colaMuestras");
+        actualizarAviso();
+        alert("Sincronización completada");
+        setTimeout(() => location.reload(), 1500);
+      }
+      botonSincronizar.addEventListener("click", sincronizar);
+      //Sincronización cuando vuelve la red
+      window.addEventListener("online", sincronizar);
+      //Al hacer submit en el formulario
+      formularioNuevaMuestra.addEventListener("submit", async function (e) {
+        if (!navigator.onLine) {
+          e.preventDefault();
+          const file = document.getElementById("foto").files[0];
+          if (file) {
+            const maxSize = 4 * 1024 * 1024; // <4 MB
+            if (file.size > maxSize) {
+              alert("La foto supera 4 MB. Reduce calidad de la cámara");
+              return;
+            }
+          }
+          let base64 = null;
+          if (file) {
+            base64 = await leerFotoBase64(file);
+          }
+          const muestra = {
+            proyectoId: document.getElementById("proyectoId").value,
+            codigo: document.getElementById("codigo").value,
+            temperatura_agua: document.getElementById("temperatura_agua").value,
+            pH: document.getElementById("pH").value,
+            oxigeno_agua: document.getElementById("oxigeno_agua").value,
+            conductividad: document.getElementById("conductividad").value,
+            observaciones: document.getElementById("observaciones").value,
+            fecha_hora: document.getElementById("fecha_hora").value,
+            foto: base64,
+            offline_id: "off_" + Date.now() + "_" + Math.floor(Math.random() * 10000)
+          };
+          //Evitar duplicados en cola offline
+          let cola = JSON.parse(localStorage.getItem("colaMuestras")) || [];
+          const yaOffline = cola.find(m =>
+            m.codigo === muestra.codigo &&
+            m.fecha_hora === muestra.fecha_hora
+          );
+          if (yaOffline) {
+            alert("Ya tienes esta muestra guardada pendiente de sincronizar");
+            return;
+          }
+          guardarOffline(muestra);
+          alert("Sin conexión. Muestra guardada en el dispositivo.");
+          formularioNuevaMuestra.reset();
+        }
+      });
+      // Actualizar aviso
+      function actualizarAviso() {
+        let cola = JSON.parse(localStorage.getItem("colaMuestras")) || [];
+        if (cola.length === 0) {
+          avisoPendientes.style.display = "none";
+        } else {
+          avisoPendientes.style.display = "block";
+          avisoPendientes.innerText = "Ojo " + cola.length + " muestras pendientes de sincronizar";
+          avisoPendientes.className = "alert alert-warning mt-3";
+        }
+      }
+      actualizarAviso();
+    </script>
+
+    <%- include('partials/foot') %>

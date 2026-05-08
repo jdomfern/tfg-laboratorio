@@ -1,0 +1,84 @@
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnLight = document.getElementById("btnLight");
+    const btnDark = document.getElementById("btnDark");
+    const temaGuardado = localStorage.getItem("theme");
+    const clave = document.getElementById("password");
+    const verClave = document.getElementById("verPassword");
+
+    // Para ver la contraseña mientras se mantiene pulsado el botón
+    if (clave && verClave) {
+      verClave.addEventListener("mousedown", () => {
+        clave.type = "text";
+      });
+      verClave.addEventListener("mouseup", () => {
+        clave.type = "password";
+      });
+      verClave.addEventListener("mouseleave", () => {
+        clave.type = "password";
+      });
+      verClave.addEventListener("touchstart", () => {
+        clave.type = "text";
+      });
+      verClave.addEventListener("touchend", () => {
+        clave.type = "password";
+      });
+    }
+    // Para cambiar entre tema claro y oscuro
+    function activarClaro() {
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light");
+      if (btnLight) btnLight.classList.add("tema-activo");
+      if (btnDark) btnDark.classList.remove("tema-activo");
+    }
+
+    function activarOscuro() {
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("theme", "dark");
+      if (btnDark) btnDark.classList.add("tema-activo");
+      if (btnLight) btnLight.classList.remove("tema-activo");
+    }
+    if (temaGuardado === "dark") {
+      activarOscuro();
+    } else {
+      activarClaro();
+    }
+    if (btnLight) {
+      btnLight.addEventListener("click", activarClaro);
+    }
+    if (btnDark) {
+      btnDark.addEventListener("click", activarOscuro);
+    }
+    //Para mensaje de registro según el rol que corresponde
+    const parametros = new URLSearchParams(window.location.search);
+    const rolRegistro = parametros.get("registro");
+    const mensaje = document.getElementById("mensajeRegistro");
+
+    if (rolRegistro && mensaje) {
+      if (rolRegistro === "administrador") {
+        mensaje.textContent = "Registrado como administrador";
+        mensaje.classList.add("admin");
+      }
+      if (rolRegistro === "tecnico") {
+        mensaje.textContent = "Registrado como técnico";
+      }
+      // mostrar
+      mensaje.classList.remove("d-none");
+      setTimeout(() => {
+        mensaje.classList.add("mostrar");
+      }, 50);
+      // ocultar a los 2 segundos
+      setTimeout(() => {
+        mensaje.classList.remove("mostrar");
+      }, 2000);
+      // eliminar del DOM después
+      setTimeout(() => {
+        mensaje.classList.add("d-none");
+      }, 2300);
+    }
+  });
+</script>
+</body>
+
+</html>

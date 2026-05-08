@@ -1,0 +1,46 @@
+<%- include('partials/head', { title: 'Reset contraseña' }) %>
+  <%- include('partials/navbar') %>
+
+    <div class="container py-4">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header bg-warning">
+              Cambiar contraseña
+            </div>
+            <div class="card-body">
+              <% if (error) { %>
+                <div class="alert alert-danger">
+                  <%= error %>
+                </div>
+                <% } %>
+                  <form method="POST" action="/reset">
+                    <div class="mb-3">
+                      <label class="form-label" for="email">Email</label>
+                      <input name="email" id="email" type="email" class="form-control" pattern="^[a-zA-Z0-9._%+-]+@aqualab\.com$"
+                        title="Introduce un correo corporativo válido, por ejemplo: usuario@aqualab.com" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label" for="token" >Contraseña de un solo uso</label>
+                      <input id="token" name="token" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label" for="password">Nueva contraseña</label>
+                      <div class="input-group">
+                        <input name="new_password" type="password" id="password" class="form-control" required>
+                        <span class="input-group-text" id="verPassword" style="cursor:pointer;">
+                          <i class="bi bi-eye"></i>
+                        </span>
+                      </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                      Cambiar contraseña
+                    </button>
+                  </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/foot') %>

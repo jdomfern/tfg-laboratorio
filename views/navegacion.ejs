@@ -1,0 +1,29 @@
+<%- include('partials/head', { title: 'Navegación' }) %>
+  <%- include('partials/navbar') %>
+
+    <div class="container py-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+          <h2 class="mb-1">Puntos de muestreo</h2>
+          <p class="text-muted mb-0">Mapa con los puntos de muestreo</p>
+        </div>
+      </div>
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="ratio ratio-16x9">
+            <iframe
+              src="https://www.google.com/maps/d/embed?mid=19fsEIbSNn_ZiaXCnPMruMo4LeffuZBw&ehbc=2E312F&noprof=1&t=h"
+              style="border:0;" loading="lazy" allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
+      <div class="d-grid mt-3">
+        <a class="btn btn-success btn-lg" target="_blank" rel="noopener noreferrer"
+          href="https://www.google.com/maps/d/viewer?mid=19fsEIbSNn_ZiaXCnPMruMo4LeffuZBw&ehbc=2E312F&noprof=1&t=h">
+          Abrir en Google Maps
+        </a>
+      </div>
+    </div>
+
+    <%- include('partials/foot') %>

@@ -1,0 +1,158 @@
+<%- include('partials/head', { title: title || 'Proyectos' }) %>
+<%- include('partials/navbar') %>
+
+<div class="container py-5">
+  <div class="text-center mb-4">
+    <h1 class="titulo-tarjeta">Gestión de proyectos</h1>
+  </div>
+  <% if (success === 'created') { %>
+    <div class="alert alert-success">Proyecto dado de alta correctamente.</div>
+  <% } %>
+  <% if (success === 'updated') { %>
+    <div class="alert alert-success">Proyecto actualizado correctamente.</div>
+  <% } %>
+  <% if (success === 'estado') { %>
+    <div class="alert alert-success">Estado del proyecto actualizado correctamente.</div>
+  <% } %>
+  <div class="row g-3 mb-4 justify-content-center">
+    <div class="col-12 col-md-4">
+      <a href="/proyectos/alta" class="text-decoration-none">
+        <div class="card tarjeta-principal clickable h-100">
+          <div class="card-body text-center p-4">
+            <div class="circulo-icono mb-3">
+              <i class="bi bi-folder-plus"></i>
+            </div>
+            <h5 class="card-title titulo-tarjeta">Alta proyecto</h5>
+            <p class="card-text text-muted mb-0">Registrar nuevo proyecto</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-12 col-md-4">
+      <a href="/proyectos/consulta" class="text-decoration-none">
+        <div class="card tarjeta-principal clickable h-100">
+          <div class="card-body text-center p-4">
+            <div class="circulo-icono mb-3">
+              <i class="bi bi-search"></i>
+            </div>
+            <h5 class="card-title titulo-tarjeta">Consultar proyectos</h5>
+            <p class="card-text text-muted mb-0">Consultar y editar la información del proyecto</p>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+  <% if (modo === 'alta') { %>
+    <div class="card tarjeta-principal">
+      <div class="card-body p-4">
+        <h4 class="titulo-tarjeta mb-4">Alta de proyecto</h4>
+        <form action="/proyectos" method="POST">
+          <div class="mb-3">
+            <label class="form-label" for="nombre">Nombre del proyecto</label>
+            <input type="text" id="nombre" name="nombre" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="descripcion">Descripción</label>
+            <textarea id="descripcion" name="descripcion" class="form-control" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="ubicacion">Ubicación</label>
+            <input type="text" id="ubicacion" name="ubicacion" class="form-control">
+          </div>
+          <button type="submit" class="btn btn-primary">Guardar proyecto</button>
+          <a href="/proyectos" class="btn btn-secondary">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  <% } %>
+  <% if (modo === 'consulta') { %>
+    <div class="card tarjeta-principal">
+      <div class="card-body p-4">
+        <h4 class="titulo-tarjeta mb-4">Consulta de proyectos</h4>
+        <form action="/proyectos/consulta" method="GET" class="row g-2 mb-4">
+          <div class="col-12 col-md-9">
+            <input type="text" name="nombre" class="form-control" placeholder="Buscar por nombre de proyecto">
+          </div>
+          <div class="col-12 col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Buscar</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Ubicación</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (proyectos && proyectos.length > 0) { %>
+                <% proyectos.forEach(proyecto => { %>
+                  <tr>
+                    <td><%= proyecto.nombre %></td>
+                    <td><%= proyecto.descripcion || '-' %></td>
+                    <td><%= proyecto.ubicacion || '-' %></td>
+                    <td>
+                      <% if (proyecto.activo) { %>
+                        <span class="badge bg-success">Alta</span>
+                      <% } else { %>
+                        <span class="badge bg-secondary">Baja</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div class="d-flex justify-content-center gap-2">
+                        <a href="/proyectos/<%= proyecto.id %>/editar" class="btn btn-sm btn-warning boton-accion-proyecto">
+                          Editar
+                        </a>
+                        <form action="/proyectos/<%= proyecto.id %>/estado" method="POST" class="m-0">
+                          <button
+                            type="submit"
+                            class="btn btn-sm <%= proyecto.activo ? 'btn-danger' : 'btn-success' %> boton-accion-proyecto"
+                            onclick="return confirm('¿Seguro que quieres cambiar el estado de este proyecto?')">
+                            <%= proyecto.activo ? 'Dar de baja' : 'Dar de alta' %>
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="5" class="text-center text-muted">No hay proyectos registrados.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% } %>
+  <% if (modo === 'editar' && proyecto) { %>
+    <div class="card tarjeta-principal">
+      <div class="card-body p-4">
+        <h4 class="titulo-tarjeta mb-4">Editar proyecto</h4>
+        <form action="/proyectos/<%= proyecto.id %>?_method=PUT" method="POST">
+          <div class="mb-3">
+            <label class="form-label" for="nombreEditar">Nombre del proyecto</label>
+            <input type="text" id="nombreEditar" name="nombre" class="form-control" value="<%= proyecto.nombre %>" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="descripcionEditar" >Descripción</label>
+            <textarea name="descripcion" id="descripcionEditar" class="form-control" rows="3"><%= proyecto.descripcion || '' %></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="ubicacionEditar">Ubicación</label>
+            <input type="text" id="ubicacionEditar" name="ubicacion" class="form-control" value="<%= proyecto.ubicacion || '' %>">
+          </div>
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+          <a href="/proyectos/consulta" class="btn btn-secondary">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<%- include('partials/foot') %>

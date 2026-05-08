@@ -1,0 +1,64 @@
+<%- include('partials/head', { title: 'Contacto' }) %>
+  <%- include('partials/navbar') %>
+
+    <div class="container py-4">
+      <div class="row g-4">
+        <div class="col-12">
+          <h2 class="mb-1">Contacto</h2>
+          <p class="text-muted mb-0">Información de sedes y atención al público</p>
+          <hr>
+        </div>
+        <!-- SEDE CENTRAL -->
+        <div class="col-12 col-lg-6">
+          <div class="card sede-card h-100">
+            <div class="card-header bg-dark text-white">
+              <h5 class="mb-0">Sede central</h5>
+            </div>
+            <div class="card-body">
+              <p class="mb-2"><strong>Dirección:</strong> Paseo de la Castellana 142, Madrid</p>
+              <p class="mb-2"><strong>Teléfono:</strong> +34 911 000 101</p>
+              <p class="mb-2"><strong>Email:</strong> sede@aqualab.com</p>
+              <p class="mb-0"><strong>Horario:</strong> L-V 09:00-14:00 y 16:00-19:00</p>
+            </div>
+            <div class="ratio ratio-16x9">
+              <iframe src="https://www.google.com/maps?q=Paseo%20de%20la%20Castellana%20142%20Madrid&output=embed"
+                loading="lazy" style="border:0;">
+              </iframe>
+            </div>
+            <div class="p-3 d-grid">
+              <a class="btn btn-outline-primary" target="_blank" rel="noopener noreferrer"
+                href="https://www.google.com/maps/search/?api=1&query=Paseo%20de%20la%20Castellana%20142%20Madrid">
+                Abrir en Google Maps
+              </a>
+            </div>
+          </div>
+        </div>
+        <!-- SEDE SEVILLA -->
+        <div class="col-12 col-lg-6">
+          <div class="card sede-card h-100">
+            <div class="card-header bg-secondary text-white">
+              <h5 class="mb-0">Sede Sevilla</h5>
+            </div>
+            <div class="card-body">
+              <p class="mb-2"><strong>Dirección:</strong> Barrio Nuevo, 4, Sevilla</p>
+              <p class="mb-2"><strong>Teléfono:</strong> +34 955 000 000</p>
+              <p class="mb-2"><strong>Email:</strong> sevilla@aqualab.com</p>
+              <p class="mb-0"><strong>Horario:</strong> L-V 08:30-15:30</p>
+            </div>
+            <div class="ratio ratio-16x9">
+              <iframe src="https://www.google.com/maps?q=Barrio%20Nuevo%204%20Sevilla&output=embed" loading="lazy"
+                style="border:0;">
+              </iframe>
+            </div>
+            <div class="p-3 d-grid">
+              <a class="btn btn-outline-primary" target="_blank" rel="noopener noreferrer"
+                href="https://www.google.com/maps/search/?api=1&query=Barrio%20Nuevo%204%20Sevilla">
+                Abrir en Google Maps
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/foot') %>

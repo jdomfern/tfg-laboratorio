@@ -1,0 +1,93 @@
+<%- include('partials/head', { title: 'Editar' }) %>
+  <%- include('partials/navbar') %>
+
+    <div class="container py-4">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card shadow-sm">
+            <div class="card-header bg-warning">
+              <h4 class="mb-0">Editar muestra <%= muestra.codigo %>
+              </h4>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Edita los parámetros y la foto.</p>
+              <form method="POST" action="/editar/<%= muestra.id %>?_method=PUT" class="row g-3" enctype="multipart/form-data">
+                <div class="col-md-6">
+                  <label class="form-label" for="proyectoId">Proyecto</label>
+                  <select name="proyectoId" id="proyectoId" class="form-select" required>
+                    <option value="">Selecciona un proyecto</option>
+                    <% proyectos.forEach(proyecto => { %>
+                      <option value="<%= proyecto.id %>"
+                        <%= Number(muestra.proyectoId) === Number(proyecto.id) ? 'selected' : '' %>>
+                        <%= proyecto.nombre %>
+                      </option>
+                    <% }) %>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="codigo">Código</label>
+                  <input class="form-control" type="text" id="codigo" name="codigo" required
+                    value="<%= muestra.codigo %>">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="fecha_hora">Fecha y hora</label>
+                  <input class="form-control" type="datetime-local" id="fecha_hora" name="fecha_hora"
+                    value="<%= muestra.fecha_hora || '' %>" max="<%= ahora %>">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="temperatura_agua">Temperatura (ºC)</label>
+                  <input class="form-control" type="number" id="temperatura_agua" name="temperatura_agua" step="0.1"
+                    required value="<%= formateaDecimal(muestra.temperatura_agua) %>">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="pH">pH</label>
+                  <input class="form-control" type="number" id="pH" name="pH" min="1" max="14" step="0.01"
+                    inputmode="decimal" required value="<%= formateaDecimal(muestra.pH) %>">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="oxigeno_agua">Oxígeno disuelto (% sat)</label>
+                  <input class="form-control" type="number" id="oxigeno_agua" name="oxigeno_agua" step="0.01" min="0" max="200"
+                    inputmode="decimal" required value="<%= formateaDecimal(muestra.oxigeno_agua) %>">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="conductividad">Conductividad (µS/cm a 20ºC)</label>
+                  <input class="form-control" type="number" id="conductividad" name="conductividad" step="0.01"
+                    inputmode="decimal" required value="<%= formateaDecimal(muestra.conductividad) %>">
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="observaciones">Observaciones</label>
+                  <textarea class="form-control" id="observaciones" name="observaciones" rows="3"
+                    style="text-align:left;"><%= muestra.observaciones || '' %></textarea>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Foto actual</label>
+                  <% if (muestra.foto_path) { %>
+                    <div class="d-flex flex-column flex-md-row gap-3 align-items-start">
+                      <img src="<%= muestra.foto_path %>" class="img-thumbnail" style="max-width:260px"
+                        alt="Foto muestra">
+                      <div>
+                        <a class="btn btn-outline-secondary btn-sm" href="<%= muestra.foto_path %>"
+                          target="_blank">Abrir</a>
+                      </div>
+                    </div>
+                    <% } else { %>
+                      <div class="text-muted">No hay foto guardada</div>
+                      <% } %>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="foto">Cambiar foto</label>
+                  <input class="form-control" type="file" id="foto" name="foto" accept="image/*" capture="environment">
+                  <div class="form-text">Abrir cámara/galería.</div>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                  <button class="btn btn-warning" type="submit">Guardar cambios</button>
+                  <a class="btn btn-outline-secondary" href="/consult">Cancelar</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/foot') %>

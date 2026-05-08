@@ -1,0 +1,89 @@
+<nav class="navbar navbar-expand-lg navbar-dark barra-principal shadow-sm fixed-top">
+  <div class="container-fluid px-3 px-lg-4">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+      <img src="/img/logo_empresa.png" alt="Logo empresa" class="logo-empresa">
+      <span>AquaLab</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+      aria-controls="mainNav" aria-expanded="false" aria-label="Abrir menú">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link <%= (active === 'home' ? 'active' : '') %>" href="/">Inicio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link <%= (active === 'contacto' ? 'active' : '') %>" href="/contacto">Contacto</a>
+        </li>
+        <% if (user) { %>
+          <% if (user.role === 'administrador') { %>
+            <li class="nav-item">
+              <a class="nav-link <%= active === 'proyectos' ? 'active' : '' %>" href="/proyectos">
+                Proyectos
+              </a>
+            </li>
+             <% } %>
+          <li class="nav-item">
+            <a class="nav-link <%= (active === 'consult' ? 'active' : '') %>" href="/consult">Consulta</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <%= (active === 'nueva' ? 'active' : '') %>" href="/nueva">Nueva muestra</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <%= (active === 'navegacion' ? 'active' : '') %>" href="/navegacion">Navegación</a>
+          </li>
+          <li>
+            <a class="nav-link <%= active === 'chat' ? 'active' : '' %>" href="/chat">Chat</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <%= active === 'informacion' ? 'active' : '' %>" href="/informacion">
+              Información adicional
+            </a>
+          </li>
+          <% } %>
+      </ul>
+      <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 ms-lg-3">
+        <div class="selector-tema">
+          <button id="btnLight" type="button" class="boton-tema tema-activo">
+            <i class="bi bi-sun-fill"></i> Claro
+          </button>
+          <button id="btnDark" type="button" class="boton-tema">
+            <i class="bi bi-moon-stars-fill"></i> Oscuro
+          </button>
+        </div>
+        <% if (user) { %>
+          <!-- escritorio-->
+          <div class="usuario-navbar text-white-50 d-none d-lg-flex align-items-center ms-lg-2">
+            <i class="bi bi-person-circle me-2 icono-usuario"></i>
+            <div class="info-usuario">
+              <div class="nombre-usuario">
+                <%= user.name || user.email %>
+              </div>
+              <div class="rol-navbar">
+                <%= user.role === 'administrador' ? 'Administrador' : 'Técnico' %>
+              </div>
+            </div>
+          </div>
+          <!-- móvil-->
+          <div class="usuario-navbar text-white-50 d-lg-none mt-2 d-flex align-items-center">
+            <i class="bi bi-person-circle me-2 icono-usuario"></i>
+            <div class="info-usuario">
+              <div class="nombre-usuario">
+                <%= user.name || user.email %>
+              </div>
+              <div class="rol-navbar">
+                <%= user.role === 'administrador' ? 'Administrador' : 'Técnico' %>
+              </div>
+            </div>
+          </div>
+          <a class="btn btn-outline-light btn-sm" href="/logout">Salir</a>
+          <% } else { %>
+            <a class="btn btn-outline-light btn-sm" href="/login">Login</a>
+            <a class="btn btn-warning btn-sm" href="/register">Registro</a>
+            <% } %>
+      </div>
+      <div id="mensajeRegistro" class="mensaje-registro d-none"></div>
+    </div>
+  </div>
+</nav>
