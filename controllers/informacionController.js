@@ -12,6 +12,7 @@ const APPS_SCRIPT_AEMET_URL = 'https://script.google.com/macros/s/AKfycbwMQxnEnG
 
 //Para vista información adicional, manda la url del iframe del looker para mostrar 
 exports.getInformacion = (req, res) => {
+  const enProduccion = process.env.NODE_ENV === 'production';
   res.render('informacion', {
     title: 'Información adicional',
     active: 'informacion',
@@ -21,8 +22,10 @@ exports.getInformacion = (req, res) => {
     panel: req.query.panel || '', // Mantiene seleccionado el panel tras recargar la página
     municipio: req.query.municipio || '', //pasa municipio a la vista
     cacheBuster: Date.now(), //forzar recargar iframe (looker tarda 15 minutos como min. en recargar datos)
-    //URL del informe interno de Looker Studio con datos de las muestras registradas
-    lookerInternoUrl: 'https://datastudio.google.com/embed/reporting/8c94e03c-8d88-4a64-84b3-d939394eef5a',
+    //URL del informe de Looker Studio con datos de las muestras registradas.Si esta desplegado carga una url de looker que carga los datos de la base de datos desplegada, sino, la de local
+    lookerInternoUrl: enProduccion
+    ? 'https://datastudio.google.com/embed/reporting/f93bc84f-19d7-4eb5-b755-b8580c34bf3a' //PRODUCCIÓN (Railway)
+    : 'https://datastudio.google.com/embed/reporting/8c94e03c-8d88-4a64-84b3-d939394eef5a',//LOCAL (google sheet)
     // URL de informes de Looker Studio embebidos
     lookerEmbalsesUrl: 'https://datastudio.google.com/embed/reporting/f12ed508-c4f3-4d2d-9008-beb7f8ede1d0',
     lookerRiosUrl: 'https://datastudio.google.com/embed/reporting/329c9fa6-3e23-497c-be56-3bff58d53fa4',

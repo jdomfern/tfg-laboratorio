@@ -6,3 +6,5 @@ playwright-report
 test-mysql
 test-muestra
 test-db
+backup.sql
+importar-backup.js
