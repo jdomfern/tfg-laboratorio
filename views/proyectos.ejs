@@ -92,7 +92,11 @@
               <% if (proyectos && proyectos.length > 0) { %>
                 <% proyectos.forEach(proyecto => { %>
                   <tr>
-                    <td><%= proyecto.nombre %></td>
+                    <td>
+                    <a href="/consult?proyectoId=<%= proyecto.id %>" class="text-decoration-none">
+                      <%= proyecto.nombre %>
+                    </a>
+                    </td>
                     <td><%= proyecto.descripcion || '-' %></td>
                     <td><%= proyecto.ubicacion || '-' %></td>
                     <td>

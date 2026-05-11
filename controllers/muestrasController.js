@@ -1,20 +1,21 @@
+const { Op } = require('sequelize');
 const Muestra = require('../models/Muestra');
 const Proyecto = require('../models/Proyecto');
 
-//Formatear fecha actual adaptando a UTC para pasarla como tope en formulario (atributo max)
-function ahoraParaInputDatetime() {
-  const ahora = new Date();
-  const offset = ahora.getTimezoneOffset(); //diferencia horaria con la hora UTC en minutos
-  const local = new Date(ahora.getTime() - offset * 60000); //Para ajustarla restarle la diferencia en milisegundos entre las dos horas(le sumas al ser resta de un negativo)
-  return local.toISOString().slice(0, 16);//recorta la cadena  a la fecha y hora ajustada tras volver a pasar a UTC para formato date-time
+//Convierte una fecha a formato válido para input datetime-local indicando hora de España peninsular
+function fechaEspañolaParaInput(fecha) {
+  return fecha.toLocaleString('sv-SE', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+  }).replace(' ', 'T');
 }
-// Convierte la fecha MySQL a la hora local. (Paso inverso)
+
+//Formatear fecha actual en hora de España peninsular para pasarla como tope en formulario (atributo max)
+function ahoraParaInputDatetime() {
+  return fechaEspañolaParaInput(new Date());
+}
+//Convierte la fecha MySQL a formato datetime-local usando hora de España peninsular
 function mysqlToDatetimeLocal(fechaMysql) {
   if (!fechaMysql) return '';
-  const fecha = new Date(fechaMysql);
-  const offset = fecha.getTimezoneOffset(); // diferencia horaria con hora UTC (en minutos)
-  const local = new Date(fecha.getTime() - offset * 60000);  // Para ajustar a hora local
-  return local.toISOString().slice(0, 16); //recorta la cadena  a la fecha y hora ajustada tras volver a pasar a UTC para formato date-time
+  return fechaEspañolaParaInput(new Date(fechaMysql));
 }
 
 //Para reemplazar las comas por punto en los decimales y si no esta definido null
@@ -68,7 +69,7 @@ exports.postNueva = async (req, res) => {
       if (isNaN(fechaMuestra.getTime())) {
         return res.status(400).send('Error: la fecha introducida no es válida.');
       }
-      if (fechaMuestra > new Date()) {
+      if (fecha_hora > ahoraParaInputDatetime()) {
         return res.status(400).send('Error: no se puede registrar una muestra con fecha y hora futuras.');
       }
     }
@@ -101,7 +102,7 @@ exports.postNueva = async (req, res) => {
 //Para consultar las muestras, todas o por código muestra
 exports.getConsult = async (req, res) => {
   try {
-    const { mostrar_todas, codigo } = req.query;
+    const { mostrar_todas, codigo, proyectoId } = req.query;
     let todasLasMuestras = null;
     let resultados = null;
     const filtroUsuario = {};
@@ -115,7 +116,7 @@ exports.getConsult = async (req, res) => {
         raw: true
       });
       
-    } else if (codigo) {
+    } else if (codigo) { 
       resultados = await Muestra.findAll({
         where: {
           ...filtroUsuario, //spread operator para traer el userId de filtrousuario y ver las muestras de ese userID. El administrador no aporta su userID en el condicional de arriba y no se aplica filtro userID (ve todas) 
@@ -124,7 +125,25 @@ exports.getConsult = async (req, res) => {
         order: [['id', 'DESC']],
         raw: true
       });
+    } else if (proyectoId) {  //para mostrar las muestras de un proyecto, (where por proyectoId)
+      const proyectoSeleccionado = await Proyecto.findByPk(proyectoId, { raw: true });
+      if (!proyectoSeleccionado) {
+      return res.status(404).send('Proyecto no encontrado');
+      }
+      resultados = await Muestra.findAll({
+        where: {
+          ...filtroUsuario,
+          [Op.or]: [ //para buscar por id o el nombre del proyecto (para la muestras anteriores que no tenian proyectoId asignado)
+            { proyectoId },
+            { proyecto: proyectoSeleccionado.nombre }
+          ]
+        },
+        order: [['id', 'DESC']],
+        raw: true
+      });
     }
+    
+
     return res.render('consult', {
       title: 'Consulta',
       todasLasMuestras,
@@ -145,7 +164,7 @@ exports.getEditar = async (req, res) => {
       return res.status(403).send('No puedes editar una muestra de otro técnico.');
     }
     if (muestra.fecha_hora) {
-      muestra.fecha_hora = mysqlToDatetimeLocal(muestra.fecha_hora); //Para convertir la hora de mysql UTC en la hora local
+      muestra.fecha_hora = mysqlToDatetimeLocal(muestra.fecha_hora); //Para convertir la fecha de MySQL al formato datetime-local en hora española peninsular
     }
     const proyectos = await Proyecto.findAll({ //Para cargar los proyectos registrados
       where: { activo: true },
@@ -193,7 +212,7 @@ exports.putEditar = async (req, res) => {
       if (isNaN(fechaMuestra.getTime())) {
         return res.status(400).send('Error: la fecha introducida no es válida.');
       }
-      if (fechaMuestra > new Date()) {
+      if (fecha_hora > ahoraParaInputDatetime()) {
         return res.status(400).send('Error: no se puede guardar una muestra con fecha y hora futuras.');
       }
     }
