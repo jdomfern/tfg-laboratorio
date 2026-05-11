@@ -93,7 +93,7 @@
               <a class="btn btn-sm btn-warning" href="/editar/<%= f.id %>">Editar</a>
               <form action="/consult?_method=DELETE" method="POST" class="d-inline">
                 <input type="hidden" name="id" value="<%= f.id %>">
-                <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('¿Seguro que quieres eliminar la muestra <%= f.codigo %>?'?')">
+                <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('¿Seguro que quieres eliminar la muestra <%= f.codigo %>?')">
                 Eliminar
                 </button>
               </form>
