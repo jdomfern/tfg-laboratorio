@@ -4,7 +4,7 @@ const { test, expect } = require('@playwright/test');
 async function hacerLogin(page) {
   await page.goto('/login');
   await page.fill('#email', 'test@aqualab.com');
-  await page.fill('#clave', 'testprueba');
+  await page.fill('#password', 'testprueba');
   await page.getByRole('button', { name: /entrar/i }).click();
   await expect(page).toHaveURL('http://localhost:3000/');
 }
