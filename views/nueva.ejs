@@ -33,7 +33,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="temperatura_agua">Temperatura del agua (ºC)</label>
-                  <input class="form-control" type="number" id="temperatura_agua" name="temperatura_agua" step="0.1"   min="0" max="50"
+                  <input class="form-control" type="number" id="temperatura_agua" name="temperatura_agua" step="0.1"
                     inputmode="decimal" required>
                 </div>
                 <div class="col-md-4">
@@ -48,7 +48,7 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label" for="conductividad">Conductividad (µS/cm a 20ºC)</label>
-                  <input class="form-control" type="number" id="conductividad" name="conductividad" step="0.01" min="0" max="50000"
+                  <input class="form-control" type="number" id="conductividad" name="conductividad" step="0.01"
                     inputmode="decimal" required>
                 </div>
                 <div class="col-12">
@@ -78,8 +78,9 @@
       //Botón sincronizar
       const botonSincronizar = document.createElement("button");
       botonSincronizar.type = "button";
-      botonSincronizar.className = "btn btn-warning mt-3 w-100";
+      botonSincronizar.className = "btn btn-warning mt-3";
       botonSincronizar.innerText = "Sincronizar";
+      botonSincronizar.classList.add("w-100");
       botonSincronizar.style.marginTop = "20px";
       zonaSincronizacion.appendChild(botonSincronizar);
       //Indicador visual
@@ -87,49 +88,6 @@
       avisoPendientes.className = "alert alert-info mt-3";
       avisoPendientes.style.display = "none";
       zonaSincronizacion.appendChild(avisoPendientes);
-
-      //Convierte coma decimal a punto, por si el usuario escribe 7,5
-      function numero(valor) {
-      if (valor === null || valor === undefined || valor === "") return NaN;
-      return parseFloat(String(valor).replace(",", "."));
-      }
-      // Validación del formulario antes de guardar offline
-      function validarFormularioNuevaMuestra() {
-      if (!formularioNuevaMuestra.checkValidity()) {
-      formularioNuevaMuestra.reportValidity();
-      return false;
-      }
-      const temperatura = numero(document.getElementById("temperatura_agua").value);
-      const ph = numero(document.getElementById("pH").value);
-      const oxigeno = numero(document.getElementById("oxigeno_agua").value);
-      const conductividad = numero(document.getElementById("conductividad").value);
-      const fechaHora = document.getElementById("fecha_hora").value;
-      if (isNaN(temperatura) || temperatura < 0 || temperatura > 50) {
-      alert("La temperatura del agua debe estar entre 0 y 50 ºC.");
-      return false;
-      }
-      if (isNaN(ph) || ph < 1 || ph > 14) {
-      alert("El pH debe estar entre 1 y 14.");
-      return false;
-      }
-      if (isNaN(oxigeno) || oxigeno < 0 || oxigeno > 200) {
-      alert("El oxígeno disuelto debe estar entre 0 y 200 % max.");
-      return false;
-      }
-      if (isNaN(conductividad) || conductividad < 0 || conductividad > 50000) {
-      alert("La conductividad debe estar entre 0 y 50000 µS/cm.");
-      return false;
-      }
-      if (fechaHora) {
-      const fechaMuestra = new Date(fechaHora);
-      const ahora = new Date();
-      if (isNaN(fechaMuestra.getTime()) || fechaMuestra > ahora) {
-        alert("No se puede registrar una muestra con fecha futura.");
-        return false;
-      }
-      }
-      return true;
-      }
       //Función guardar offline 
       function guardarOffline(muestra) {
         let cola = JSON.parse(localStorage.getItem("colaMuestras")) || [];
@@ -174,7 +132,7 @@
               alert("Ya existe una muestra con ese código y fecha");
             }
           } catch (e) {
-            alert("No se pudo sincronizar. Revisa la conexión o los datos pendientes.");
+            alert("Sigue sin conexión");
             return;
           }
         }
@@ -186,15 +144,10 @@
       botonSincronizar.addEventListener("click", sincronizar);
       //Sincronización cuando vuelve la red
       window.addEventListener("online", sincronizar);
-
       //Al hacer submit en el formulario
       formularioNuevaMuestra.addEventListener("submit", async function (e) {
         if (!navigator.onLine) {
           e.preventDefault();
-          //Si hay valores fuera de rango, no se guarda en localStorage
-        if (!validarFormularioNuevaMuestra()) {
-        return;
-        }
           const file = document.getElementById("foto").files[0];
           if (file) {
             const maxSize = 4 * 1024 * 1024; // <4 MB
