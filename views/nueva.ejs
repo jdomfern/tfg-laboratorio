@@ -34,7 +34,7 @@
                 <div class="col-md-6">
                   <label class="form-label" for="temperatura_agua">Temperatura del agua (ºC)</label>
                   <input class="form-control" type="number" id="temperatura_agua" name="temperatura_agua" step="0.1"
-                    inputmode="decimal" required>
+                    inputmode="decimal" min="0" max="50" required>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label" for="pH">pH</label>
@@ -49,7 +49,7 @@
                 <div class="col-md-4">
                   <label class="form-label" for="conductividad">Conductividad (µS/cm a 20ºC)</label>
                   <input class="form-control" type="number" id="conductividad" name="conductividad" step="0.01"
-                    inputmode="decimal" required>
+                    inputmode="decimal" min="0" max="50000" required>
                 </div>
                 <div class="col-12">
                   <label class="form-label" for="observaciones">Observaciones</label>
@@ -148,6 +148,10 @@
       formularioNuevaMuestra.addEventListener("submit", async function (e) {
         if (!navigator.onLine) {
           e.preventDefault();
+          if (!formularioNuevaMuestra.checkValidity()) {
+         formularioNuevaMuestra.reportValidity();
+        return;
+        }
           const file = document.getElementById("foto").files[0];
           if (file) {
             const maxSize = 4 * 1024 * 1024; // <4 MB

@@ -68,13 +68,22 @@ exports.postApiMuestra = async (req,res)=>{
     error: 'Debes seleccionar un proyecto'
       });
     }
-    //Validación de valores razonables del oxígeno disuelto
+    //Validación de valores de parámetros
+    const temp = aDecimal(req.body.temperatura_agua);
+    const ph = aDecimal(req.body.pH);
+    const cond = aDecimal(req.body.conductividad);
     const oxigeno = aDecimal(req.body.oxigeno_agua);
+    if (temp === null || isNaN(temp) || temp < 0 || temp > 50) {
+    return res.status(400).json({ ok: false, error: 'La temperatura debe estar entre 0 y 50 ºC.' });
+    }
+    if (ph === null || isNaN(ph) || ph < 1 || ph > 14) {
+    return res.status(400).json({ ok: false, error: 'El pH debe estar entre 1 y 14.' });
+    }
+    if (cond === null || isNaN(cond) || cond < 0 || cond > 50000) {
+    return res.status(400).json({ ok: false, error: 'La conductividad debe estar entre 0 y 50000 µS/cm.' });
+    }
     if (oxigeno === null || isNaN(oxigeno) || oxigeno < 0 || oxigeno > 200) {
-    return res.status(400).json({
-    ok: false,
-    error: 'El oxígeno disuelto debe estar entre 0 y 200 %.'
-      });
+    return res.status(400).json({ ok: false, error: 'El oxígeno disuelto debe estar entre 0 y 200 %.' });
     }
     //Para crear el registro
     await Muestra.create({
@@ -83,16 +92,17 @@ exports.postApiMuestra = async (req,res)=>{
       proyecto: proyectoSeleccionado.nombre,
       proyectoId: req.body.proyectoId,
       codigo: req.body.codigo,
-      temperatura_agua: aDecimal(req.body.temperatura_agua),
-      pH: aDecimal(req.body.pH),
+      temperatura_agua: temp,
+      pH: ph,
       oxigeno_agua: oxigeno,
-      conductividad: aDecimal(req.body.conductividad),
+      conductividad: cond,
       observaciones: req.body.observaciones,
       fecha_hora: req.body.fecha_hora || new Date(),
       foto_path
     });
     return res.json({ ok: true });
   }catch(e){
+    console.error(e);
     return res.status(500).json({ ok: false, error: e.message });
   }
 };

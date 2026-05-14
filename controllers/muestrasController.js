@@ -58,13 +58,25 @@ exports.postNueva = async (req, res) => {
       fecha_hora
     } = req.body;
 
-     // Validar oxígeno disuelto
+     // Validar àrámetros
      const oxigeno = aDecimal(oxigeno_agua);
-     if (oxigeno === null || isNaN(oxigeno) || oxigeno < 0 || oxigeno > 200) {
-       return res.status(400).send('Error: el oxígeno disuelto debe estar entre 0 y 200 % max.');
+     const temp = aDecimal(temperatura_agua);
+     const ph = aDecimal(pH);
+     const cond = aDecimal(conductividad);
+     if (temp === null || isNaN(temp) || temp < 0 || temp > 50) {
+     return res.status(400).send('Error: la temperatura debe estar entre 0 y 50 ºC.');
      }
-    // Valida que no se registren muestras futuras y evitar esa trampa
-    if (fecha_hora) {
+     if (ph === null || isNaN(ph) || ph < 1 || ph > 14) {
+     return res.status(400).send('Error: el pH debe estar entre 1 y 14.');
+     }
+     if (cond === null || isNaN(cond) || cond < 0 || cond > 50000) {
+     return res.status(400).send('Error: la conductividad debe estar entre 0 y 50000 µS/cm max.');
+     }
+     if (oxigeno === null || isNaN(oxigeno) || oxigeno < 0 || oxigeno > 200) {
+     return res.status(400).send('Error: el oxígeno disuelto debe estar entre 0 y 200 % max.');
+     }
+     // Valida que no se registren muestras futuras y evitar esa trampa
+     if (fecha_hora) {
       const fechaMuestra = new Date(fecha_hora);
       if (isNaN(fechaMuestra.getTime())) {
         return res.status(400).send('Error: la fecha introducida no es válida.');
@@ -82,10 +94,10 @@ exports.postNueva = async (req, res) => {
       proyecto: proyectoSeleccionado.nombre,
       proyectoId,
       codigo,
-      temperatura_agua: aDecimal(temperatura_agua),
-      pH: aDecimal(pH),
+      temperatura_agua: temp,
+      pH: ph,
       oxigeno_agua: oxigeno,
-      conductividad: aDecimal(conductividad),
+      conductividad: cond,
       observaciones,
       foto_path: req.file ? `/uploads/${req.file.filename}` : null
     };
@@ -202,11 +214,23 @@ exports.putEditar = async (req, res) => {
       observaciones,
       fecha_hora
     } = req.body;
-    // Validar oxígeno disuelto también al editar
-    const oxigeno = aDecimal(oxigeno_agua);
-    if (oxigeno === null || isNaN(oxigeno) || oxigeno < 0 || oxigeno > 200) {
-      return res.status(400).send('Error: el oxígeno disuelto debe estar entre 0 y 200 % max.');
-    }
+    // Validar parámetros también al editar
+     const oxigeno = aDecimal(oxigeno_agua);
+     const temp = aDecimal(temperatura_agua);
+     const ph = aDecimal(pH);
+     const cond = aDecimal(conductividad);
+     if (temp === null || isNaN(temp) || temp < 0 || temp > 50) {
+     return res.status(400).send('Error: la temperatura debe estar entre 0 y 50 ºC.');
+     }
+     if (ph === null || isNaN(ph) || ph < 1 || ph > 14) {
+     return res.status(400).send('Error: el pH debe estar entre 1 y 14.');
+     }
+     if (cond === null || isNaN(cond) || cond < 0 || cond > 50000) {
+     return res.status(400).send('Error: la conductividad debe estar entre 0 y 50000 µS/cm max.');
+     }
+     if (oxigeno === null || isNaN(oxigeno) || oxigeno < 0 || oxigeno > 200) {
+     return res.status(400).send('Error: el oxígeno disuelto debe estar entre 0 y 200 % max.');
+     }
     if (fecha_hora) {// Validar que no se pueda guardar una fecha futura
       const fechaMuestra = new Date(fecha_hora);
       if (isNaN(fechaMuestra.getTime())) {
@@ -224,10 +248,10 @@ exports.putEditar = async (req, res) => {
       proyecto: proyectoSeleccionado.nombre,
       proyectoId,
       codigo,
-      temperatura_agua: aDecimal(temperatura_agua),
-      pH: aDecimal(pH),
+      temperatura_agua: temp,
+      pH: ph,
       oxigeno_agua: oxigeno,
-      conductividad: aDecimal(conductividad),
+      conductividad: cond,
       observaciones
     };
     const fechaHoraMysql = convierteDatetime(fecha_hora);
