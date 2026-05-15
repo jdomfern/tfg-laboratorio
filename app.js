@@ -73,6 +73,11 @@ app.use((req, res, next) => {
 });
 // Archivos estáticos de carpeta public a usar
 app.use(express.static('public'));
+//Verifica conexión con servidor para función sincronizar
+app.get("/ping", (req,res)=>{
+  res.sendStatus(200);
+});
+
 // Rutas 
 app.use(authRoutes);
 app.use(muestrasRoutes);

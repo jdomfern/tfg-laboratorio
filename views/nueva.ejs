@@ -75,6 +75,10 @@
 
       const formularioNuevaMuestra = document.querySelector("form");
       const zonaSincronizacion = document.getElementById("zonaSincronizacion");
+      //Id del usuario logueado para que la muestra que se quede en cola solo le aparezca a ese usuario
+      // Si no hay usuario 'anonimo' por seguridad
+      const usuarioId = "<%= user ? user.id : 'anonimo' %>";
+      const claveCola = "colaMuestras_" + usuarioId;// Clave única en localStorage para cada usuario
       //Botón sincronizar
       const botonSincronizar = document.createElement("button");
       botonSincronizar.type = "button";
@@ -88,11 +92,23 @@
       avisoPendientes.className = "alert alert-info mt-3";
       avisoPendientes.style.display = "none";
       zonaSincronizacion.appendChild(avisoPendientes);
+
+      //Muestra u oculta el aviso de muestras pendientes
+      function actualizarAviso() {
+        let cola = JSON.parse(localStorage.getItem(claveCola)) || [];
+        if (cola.length === 0) {
+          avisoPendientes.style.display = "none";
+        } else {
+          avisoPendientes.style.display = "block";
+          avisoPendientes.innerText = "Ojo " + cola.length + " muestras pendientes de sincronizar";
+          avisoPendientes.className = "alert alert-warning mt-3";
+        }
+      }
       //Función guardar offline 
       function guardarOffline(muestra) {
-        let cola = JSON.parse(localStorage.getItem("colaMuestras")) || [];
+        let cola = JSON.parse(localStorage.getItem(claveCola)) || [];
         cola.push(muestra);
-        localStorage.setItem("colaMuestras", JSON.stringify(cola));
+        localStorage.setItem(claveCola, JSON.stringify(cola));
         actualizarAviso();
       }
       //Función leer foto
@@ -104,13 +120,25 @@
           leer.readAsDataURL(file);
         });
       }
-      //Sincronización
+      async function hayConexion() { // Hace una petición a /ping para ver si servidor responde
+      try {
+      const r = await fetch("/ping", {
+      method: "GET",
+      cache: "no-cache"
+      });
+      return r.ok;
+      } catch {
+      return false;
+       }
+      }
+      //Sincronización. Envía al servidor todas las muestras pendientes
       async function sincronizar() {
-        let cola = JSON.parse(localStorage.getItem("colaMuestras")) || [];
+        let cola = JSON.parse(localStorage.getItem(claveCola)) || [];
         if (cola.length === 0) {
           alert("No hay muestras pendientes");
           return;
         }
+        const pendientes = [];
         for (let muestra of cola) {
           try {
             const resp = await fetch("/sync/muestras", {
@@ -118,40 +146,50 @@
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(muestra)
             });
-            if (!resp.ok) {
-              throw new Error("Error al sincronizar");
-            }
+
             const data = await resp.json();
-            if (!data.ok) {
-              throw new Error("Respuesta no válida del servidor");
+            if (!resp.ok || !data.ok) {
+            throw new Error(data.error || "Error servidor");
             }
-            if (data.aviso === "ya_sincronizada") {
-              alert("Esta muestra ya estaba sincronizada");
-            }
-            if (data.aviso === "duplicada_codigo_fecha") {
-              alert("Ya existe una muestra con ese código y fecha");
+            
+            if (
+            data.aviso === "ya_sincronizada" ||
+            data.aviso === "duplicada_codigo_fecha"
+            ) {
+           continue;
             }
           } catch (e) {
-            alert("Sigue sin conexión");
-            return;
+            console.error(e);
+            pendientes.push(muestra);
           }
         }
-        localStorage.removeItem("colaMuestras");
+        localStorage.setItem(
+        claveCola,
+        JSON.stringify(pendientes)//Guarda solo las que han fallado
+        );
         actualizarAviso();
-        alert("Sincronización completada");
-        setTimeout(() => location.reload(), 1500);
+        if (pendientes.length === 0) {
+       alert("Sincronización completada");
+       setTimeout(() => location.reload(), 1500);
+      } else {
+       alert(pendientes.length + " muestras siguen pendientes");
+      }
       }
       botonSincronizar.addEventListener("click", sincronizar);
       //Sincronización cuando vuelve la red
       window.addEventListener("online", sincronizar);
       //Al hacer submit en el formulario
       formularioNuevaMuestra.addEventListener("submit", async function (e) {
-        if (!navigator.onLine) {
-          e.preventDefault();
-          if (!formularioNuevaMuestra.checkValidity()) {
+        e.preventDefault(); //evita que el formulario se envíe automáticamente
+        if (!formularioNuevaMuestra.checkValidity()) {//validación HTML
          formularioNuevaMuestra.reportValidity();
         return;
         }
+      const online = await hayConexion(); //Comprobar conexión con el servidor
+      if (online) {
+      formularioNuevaMuestra.submit(); //envío normal al servidor
+      return;
+  }
           const file = document.getElementById("foto").files[0];
           if (file) {
             const maxSize = 4 * 1024 * 1024; // <4 MB
@@ -160,11 +198,11 @@
               return;
             }
           }
-          let base64 = null;
+          let base64 = null;//convertir imagen a base64 para guardarla offline
           if (file) {
             base64 = await leerFotoBase64(file);
           }
-          const muestra = {
+          const muestra = {//crear objeto muestra
             proyectoId: document.getElementById("proyectoId").value,
             codigo: document.getElementById("codigo").value,
             temperatura_agua: document.getElementById("temperatura_agua").value,
@@ -174,10 +212,10 @@
             observaciones: document.getElementById("observaciones").value,
             fecha_hora: document.getElementById("fecha_hora").value,
             foto: base64,
-            offline_id: "off_" + Date.now() + "_" + Math.floor(Math.random() * 10000)
+            offline_id: "off_" + Date.now() + "_" + Math.floor(Math.random() * 10000)  //id único para evitar duplicados en backend
           };
           //Evitar duplicados en cola offline
-          let cola = JSON.parse(localStorage.getItem("colaMuestras")) || [];
+          let cola = JSON.parse(localStorage.getItem(claveCola)) || [];
           const yaOffline = cola.find(m =>
             m.codigo === muestra.codigo &&
             m.fecha_hora === muestra.fecha_hora
@@ -189,19 +227,8 @@
           guardarOffline(muestra);
           alert("Sin conexión. Muestra guardada en el dispositivo.");
           formularioNuevaMuestra.reset();
-        }
       });
-      // Actualizar aviso
-      function actualizarAviso() {
-        let cola = JSON.parse(localStorage.getItem("colaMuestras")) || [];
-        if (cola.length === 0) {
-          avisoPendientes.style.display = "none";
-        } else {
-          avisoPendientes.style.display = "block";
-          avisoPendientes.innerText = "Ojo " + cola.length + " muestras pendientes de sincronizar";
-          avisoPendientes.className = "alert alert-warning mt-3";
-        }
-      }
+      
       actualizarAviso();
     </script>
 
