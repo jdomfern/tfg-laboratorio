@@ -8,6 +8,24 @@ function aDecimal(valor){
   if(valor === undefined || valor === null || valor === '') return null;
   return parseFloat(valor.toString().replace(',', '.'));
 }
+
+//Convierte una fecha a formato válido para input datetime-local indicando hora de España peninsular
+function fechaEspañolaParaInput(fecha) {
+  return fecha.toLocaleString('sv-SE', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).replace(' ', 'T');
+}
+
+//Formatear fecha actual en hora de España peninsular
+function ahoraParaInputDatetime() {
+  return fechaEspañolaParaInput(new Date());
+}
 //Para sincronizar muestras
 exports.postApiMuestra = async (req,res)=>{
   try{
@@ -20,7 +38,7 @@ exports.postApiMuestra = async (req,res)=>{
       if (isNaN(fechaMuestra.getTime())) {
         return res.status(400).json({ ok: false, error: 'La fecha introducida no es válida.' });
       }
-      if (fechaMuestra > new Date()) {
+      if (req.body.fecha_hora > ahoraParaInputDatetime()) {
         return res.status(400).json({ ok: false, error: 'No se puede registrar una muestra con fecha y hora futuras.' });
       }
     }
@@ -97,7 +115,7 @@ exports.postApiMuestra = async (req,res)=>{
       oxigeno_agua: oxigeno,
       conductividad: cond,
       observaciones: req.body.observaciones,
-      fecha_hora: req.body.fecha_hora || new Date(),
+      fecha_hora: req.body.fecha_hora || ahoraParaInputDatetime(),
       foto_path
     });
     return res.json({ ok: true });
